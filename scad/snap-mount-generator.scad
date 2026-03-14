@@ -10,18 +10,21 @@ lite = false;
 
 // Thickness of the base of the mount
 base_thickness = 5.0;
+base_length = 75;
+base_width = 75;
 
 // Number of cells in X direction
 cells_x = 2;
 // Number of cells in Y direction
 cells_y = 1;
 
-// grid spacing in mm
-grid_spacing = 28;
-
 // Radius of mounting holes
 mounting_hole_radius = 2.0;
-// Mounting hole positions as [[x, y], ...] (or a single [x, y]) relative to the
+// Mounting hole positions relative to the bottom corner of the base plate closest
+// to the origin. Accepted formats:
+// - Single hole: [x, y]
+// - Multiple holes: [[x1, y1], [x2, y2], ...]
+// - Flat list: [x1, y1, x2, y2, ...]
 // bottom corner of the base plate closest to the origin
 mounting_hole_positions = [];
 
@@ -32,8 +35,10 @@ h=lite ? 3.4 : fulldiff*2;
 snap_height = h;
 snap_width = 24.80;
 
-base_length = 75;
-base_width = 75;
+// grid spacing in mm
+grid_spacing = 28;
+
+
 
 $fs = 0.1;
 
@@ -82,9 +87,18 @@ module mountingHoles(positions, radius){
     base_corner_x = grid_center_x - effective_base_length / 2;
     base_corner_y = grid_center_y - effective_base_width / 2;
 
+    is_single_pair = is_list(positions) && len(positions) == 2 && is_num(positions[0]) && is_num(positions[1]);
+
+    is_flat_numeric_list =
+        is_list(positions) &&
+        len(positions) > 0 &&
+        len(positions) % 2 == 0 &&
+        is_undef(search(false, [for (v = positions) is_num(v)]));
+
     normalized_positions =
-        (is_list(positions) && len(positions) == 2 && is_num(positions[0]) && is_num(positions[1])) ? [positions] :
-        (is_list(positions) ? positions : []);
+        is_single_pair ? [positions] :
+        (is_flat_numeric_list ? [for (i = [0:2:len(positions)-2]) [positions[i], positions[i+1]]] :
+        (is_list(positions) ? positions : []));
 
     for (pos = normalized_positions){
         if (is_list(pos) && len(pos) >= 2 && is_num(pos[0]) && is_num(pos[1])) {
