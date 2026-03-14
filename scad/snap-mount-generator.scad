@@ -21,7 +21,7 @@ grid_spacing = 28;
 
 // Radius of mounting holes
 mounting_hole_radius = 2.0;
-// Mounting hole positions as [[x, y], ...] relative to the
+// Mounting hole positions as [[x, y], ...] (or a single [x, y]) relative to the
 // bottom corner of the base plate closest to the origin
 mounting_hole_positions = [];
 
@@ -35,7 +35,7 @@ snap_width = 24.80;
 base_length = 75;
 base_width = 75;
 
-
+$fs = 0.1;
 
 
 module base(length, width, thickness){
@@ -82,11 +82,17 @@ module mountingHoles(positions, radius){
     base_corner_x = grid_center_x - effective_base_length / 2;
     base_corner_y = grid_center_y - effective_base_width / 2;
 
-    for (pos = positions){
-        hole_x = base_corner_x + pos[0];
-        hole_y = base_corner_y + pos[1];
-        translate([hole_x, hole_y, snap_height / 2 + base_thickness / 2])
-            cylinder(h=base_thickness * 10 + 0.2, r=radius, center=true);
+    normalized_positions =
+        (is_list(positions) && len(positions) == 2 && is_num(positions[0]) && is_num(positions[1])) ? [positions] :
+        (is_list(positions) ? positions : []);
+
+    for (pos = normalized_positions){
+        if (is_list(pos) && len(pos) >= 2 && is_num(pos[0]) && is_num(pos[1])) {
+            hole_x = base_corner_x + pos[0];
+            hole_y = base_corner_y + pos[1];
+            translate([hole_x, hole_y, snap_height / 2 + base_thickness / 2])
+                cylinder(h=base_thickness * 10 + 0.2, r=radius, center=true);
+        }
     }
 }
 
